@@ -28,6 +28,9 @@ class Ball:
             self.vx = - self.vx
 Bob = Ball (75,75,75,"Green")
 Brady = Ball (700,75,100,"red")
+Billy = Ball (100,100,50,"Purple")
+Biscuit = Ball (500,500,62.5,"Black")
+Bim = Ball (600,600,125,"Blue")
 run = True
 while run:
     t = clock.tick(FPS)/1000
@@ -39,10 +42,23 @@ while run:
                 Bob.vy = - 500
             if event.key == pygame.K_0:
                 Brady.vy = - 500
+            if event.key == pygame.K_1:
+                Billy.vy = + 500
+            if event.key == pygame.K_2:
+                Biscuit.vy = - 250
+            if event.key == pygame.K_9:
+                Bim.vy = - 1000
+
         
     screen.fill("White")
-    Bob.draw()
-    Bob.update(t)
+    Bim.draw()
+    Bim.update(t)
     Brady.draw()
     Brady.update(t)
+    Bob.draw()
+    Bob.update(t)
+    Biscuit.draw()
+    Biscuit.update(t)
+    Billy.draw()
+    Billy.update(t)
     pygame.display.flip()

@@ -5,6 +5,8 @@ from pygame.locals import *
 pygame.init()
 WIDTH = 800
 HEIGHT = 800
+RECYCLE_SOUND = pygame.mixer.Sound("Pygame/images/recyclebin-102273.mp3")
+PLASTIC_SOUND = pygame.mixer.Sound("Pygame/images/broken-beer-bottle-311131.mp3")
 white = (255,255,255)
 red = (255,0,0)
 score = 0
@@ -89,9 +91,11 @@ while run:
         plastic_hit_list = pygame.sprite.spritecollide(bin,plasticlist,True)
         for i in item_hit_list:
             score += 1
+            RECYCLE_SOUND.play()
             text = myFont.render("score ="+str(score),True,red)
         for i in plastic_hit_list:
             score -= 5
+            PLASTIC_SOUND.play()
             text = myFont.render("score ="+str(score),True,red)
         screen.blit(text,(700,100))
         allsprite.draw(screen)

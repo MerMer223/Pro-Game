@@ -14,15 +14,40 @@ Lasteroid = pygame.image.load("Pygame/images/largeasteroid.png")
 ufo = pygame.image.load("Pygame/images/ufo.png")
 star = pygame.image.load("Pygame/images/whitecomet.png")
 GameOver = False
+lives = 3
+score = 0
+highScore = 0
+rapidFire = False
+rfStart = -1
+isSoundOn = True
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode((WIDTH,HEIGHT))
 def Redraw_gamewindow():
     screen.blit(background,(0,0))
+    font = pygame.font.SysFont('arial',30)
+    livesText = font.render('Lives:' + str(lives), 1,(255,255,255))
+    playAgainText = font.render("Press Tab to Play Again", 1, (255,255,255))
+    scoreText = font.render("Score:" + str(score), 1,(255,255,255))
+    highScoreText = font.render("High Score: " + str(highScore), 1,(255,355,255))
     player.draw(screen)
     for b in player_bullets:
         b.draw(screen)
     for a in asteroids:
         a.draw(screen)
+    for s in stars:
+        s.draw(screen)
+    for l in aliens:
+        l.draw(screen)
+    for u in  alien_bullets:
+        u.draw(screen)
+    if rapidFire:
+        pygame.draw.rect(screen,(0,0,0), [WIDTH//2 - 51, 19, 102, 22])
+        pygame.draw.rect(screen, (255,255,255), [WIDTH//2 - 50, 20, 100 - 100*(count - rfStart)/500,20])
+    if GameOver:
+        screen.blit(playAgainText, (WIDTH//2- playAgainText.get_width()//2 , HEIGHT//2 - playAgainText.get_height()//2))
+    screen.blit(scoreText, (WIDTH - scoreText.get_width()- 25,25))
+    screen.blit(livesText, (25,25))
+    screen.blit(highScoreText, (WIDTH - highScoreText.get_width() - 25, 35 + scoreText.get_height()))
     pygame.display.update()
 class Player():
     def __init__(self):
@@ -121,10 +146,67 @@ class Asteroid():
 asteroids = []
 count = 0
 
+class Star():
+    def __init__(self):
+        self.img = star
+        self.w = self.img.get_width()
+        self.h = self.img.get_height()
+        self.ranPoint = random.choice([(random.randrange(0,WIDTH - self.w),random.choice([-1*self.h-5,HEIGHT + 5])),(random.choice([-1*self.w - 5, WIDTH + 5]),random.randrange(0, HEIGHT - self.h))])
+        self.x,self.y = self.ranPoint
+        if self.x < WIDTH//2:
+            self.xdir = 1
+        else:
+            self.xdir = -1
+        if self.y < HEIGHT//2:
+            self.ydir = 1
+        else:
+            self.ydir = -1
+        self.xv = self.xdir * 2
+        self.yv = self.ydir * 2
+    def draw(self,screen):
+        screen.blit(self.img,(self.x,self.y))
 
+class Alien():
+    def __init__(self):
+        self.img = ufo
+        self.w = self.img.get_width()
+        self.h = self.img.get_height()
+        self.ranPoint = random.choice([(random.randrange(0,WIDTH - self.w),random.choice([-1*self.h-5,HEIGHT + 5])),(random.choice([-1*self.w - 5, WIDTH + 5]),random.randrange(0, HEIGHT - self.h))])
+        self.x,self.y = self.ranPoint
+        if self.x < WIDTH//2:
+            self.xdir = 1
+        else:
+            self.xdir = -1
+        if self.y < HEIGHT//2:
+            self.ydir = 1
+        else:
+            self.ydir = -1
+        self.xv = self.xdir * 2
+        self.yv = self.ydir * 2
+    def draw(self,screen):
+        screen.blit(self.img,(self.x,self.y))
 
+class Alien_bullet():
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+        self.w = 4
+        self.h = 4
+        self.dx, self.dy = player.x - self.x, player.y - self.y
+        self.dist = math.hypot(self.dx,self.dy)
+        self.dx , self.dy = self.dx / self.dist, self.dy / self.dist
+        self.xv = self.dx * 5
+        self.yv = self.dy * 5
+
+    def draw(self,screen):
+        pygame.draw.rect(screen,(255,255,255),[self.x,self.y,self.w,self.h])
+        
 
 player_bullets = []
+asteroids = []
+stars = []
+aliens = []
+alien_bullets = []
 player = Player()
 run = True
 while run:
@@ -134,6 +216,35 @@ while run:
         if count % 50 == 0:
             ran = random.choice([1,1,1,2,2,3])
             asteroids.append(Asteroid(ran))
+        if count % 1000 == 0:
+            stars.append(Star())
+        if count % 750 == 0:
+            aliens.append(Alien())
+        for i, a in enumerate(aliens):
+            a.x += a.xv
+            a.y += a.yv
+            if a.x > WIDTH + 150 or a.x + a.w < -100 or a.y > HEIGHT + 150 or a.y + a.h <- 100:
+                aliens.pop(i)
+            if count % 60 == 0:
+                alien_bullets.append(Alien_bullet(a.x + a.w//2, a.y + a.h//2))   
+            for b in player_bullets:
+                if (b.x >= a.x and b.x <= a.x + a.w) or b.x + b.w >= a.x and b.x +b.w <= a.x +a.w:
+                    if (b.y >= a.y and b.y <= a.y +a.h) or b.y >= b.h >= a.y and b.y + b.h <= a.y + a.h:  
+                        aliens.pop(i)
+                        if isSoundOn:
+                            bangLargeSound.play()
+                        score += 50
+                        break 
+        for i, b in enumerate(alien_bullets):
+            b.x += b.xv
+            b.y += b.yv
+            if (b.x >= player.x - player.w//2 and b.x <= player.x + player.w//2) or b.x + b.w >= player.x - player.w//2 and b.x + b.w <= player.x + player.w//2:
+                if (b.y >= player.y - player.h//2 and b.y <= player.y + player.h//2) or b.y + b.h >= player.y - player.h//2 and b.y + b.h <= player.y + player.h//2:
+                    lives -= 1
+                    alien_bullets.pop(i)
+                    break   
+            
+                        
         player.updateLocation()
         for b in player_bullets:
             b.move()
@@ -142,7 +253,13 @@ while run:
         for a in asteroids:
             a.x += a.xv
             a.y += a.yv
-        
+            if (a.x >= player.x - player.w//2 and a.x <= player.x + player.w//2) or a.x + a.w >= player.x - player.w//2 and a.x + a.w <= player.x + player.w//2:
+                if (a.y >= player.y - player.h//2 and a.y <= player.y + player.h//2) or a.y + a.h >= player.y - player.h//2 and a.y + a.h <= player.y + player.h//2:
+                    lives -= 1
+                    asteroids.pop(asteroids.index(a))
+                    if isSoundOn:
+                        bangLargeSound.play()
+                    break
             for b in player_bullets:
                 if (b.x >= a.x and b.x <= a.x + a.w) or b.x + b.w >= a.x and b.x +b.w <= a.x +a.w:
                     if (b.y >= a.y and b.y <= a.y +a.h) or b.y >= b.h >= a.y and b.y + b.h <= a.y + a.h:

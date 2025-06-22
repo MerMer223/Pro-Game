@@ -13,6 +13,10 @@ Masteroid = pygame.image.load("Pygame/images/bigasteroid.png")
 Lasteroid = pygame.image.load("Pygame/images/largeasteroid.png")
 ufo = pygame.image.load("Pygame/images/ufo.png")
 star = pygame.image.load("Pygame/images/whitecomet.png")
+shoot = pygame.mixer.Sound("Pygame/images/shoot.wav")
+bangLargeSound = pygame.mixer.Sound("Pygame/images/bangLarge.wav")
+bangSmallSound = pygame.mixer.Sound("Pygame/images/bangSmall.wav")
+
 GameOver = False
 lives = 3
 score = 0
@@ -28,7 +32,7 @@ def Redraw_gamewindow():
     livesText = font.render('Lives:' + str(lives), 1,(255,255,255))
     playAgainText = font.render("Press Tab to Play Again", 1, (255,255,255))
     scoreText = font.render("Score:" + str(score), 1,(255,255,255))
-    highScoreText = font.render("High Score: " + str(highScore), 1,(255,355,255))
+    highScoreText = font.render("High Score: " + str(highScore), 1,(255,255,255))
     player.draw(screen)
     for b in player_bullets:
         b.draw(screen)
@@ -264,6 +268,9 @@ while run:
                 if (b.x >= a.x and b.x <= a.x + a.w) or b.x + b.w >= a.x and b.x +b.w <= a.x +a.w:
                     if (b.y >= a.y and b.y <= a.y +a.h) or b.y >= b.h >= a.y and b.y + b.h <= a.y + a.h:
                         if a.rank == 3:
+                            if isSoundOn:
+                                bangLargeSound.play()
+                            score += 10
                             na1 = Asteroid(2)
                             na2 = Asteroid(2)
                             na1.x = a.x
@@ -273,6 +280,9 @@ while run:
                             asteroids.append(na1)
                             asteroids.append(na2)
                         elif a.rank == 2:
+                            if isSoundOn:
+                                bangSmallSound.play()
+                            score += 20
                             na1 = Asteroid(1)
                             na2 = Asteroid(1)
                             na1.x = a.x
@@ -281,9 +291,33 @@ while run:
                             na2.y = a.y
                             asteroids.append(na1)
                             asteroids.append(na2)
+                        else:
+                            score += 30
+                            if isSoundOn:
+                                bangSmallSound.play()
                         asteroids.pop(asteroids.index(a))
                         player_bullets.pop(player_bullets.index(b))
-                        
+                        break
+        for s in stars:
+            s.x += s.xv 
+            s.y += s.yv
+            if s.x < -100 - s.w or s.x > WIDTH + 100 or s.y > HEIGHT + 100 or s.y < -100 - s.h:
+                stars.pop(stars.index(s))
+                break
+            for b in player_bullets:
+                if (b.x >= s.x and b.x <= s.x + s.w) or b.x + b.w >= s.x and b.x +b.w <= s.x +s.w:
+                    if (b.y >= s.y and b.y <= s.y +s.h) or b.y + b.h >= s.y and b.y + b.h <= s.y + s.h:
+                        rapidFire = True
+                        rfStart = count
+                        stars.pop(stars.index(s))
+                        player_bullets.pop(player_bullets.index(b))
+                        break
+        if lives <= 0:
+            GameOver = True
+        if rfStart != -1:
+            if count - rfStart > 500:
+                rapidFire = False
+                rfStart = -1
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             player.turn_left()
@@ -291,12 +325,33 @@ while run:
             player.turn_right()
         if keys[pygame.K_UP]:
             player.forward()
+        if keys[pygame.K_SPACE]:
+            if rapidFire:
+                player_bullets.append(Bullet())
+                if isSoundOn:
+                    shoot.play()
 
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 if not GameOver:
-                    player_bullets.append(Bullet())
+                    if not rapidFire:
+                        player_bullets.append(Bullet())
+                        if isSoundOn:
+                            shoot.play()
+            if event.key == pygame.K_s:
+                isSoundOn = not isSoundOn
+            if event.key == pygame.K_TAB:
+                if GameOver:
+                    GameOver = False
+                    lives = 3
+                    asteroids.clear()
+                    aliens.clear()
+                    alien_bullets.clear()
+                    stars.clear()
+                    if score > highScore:
+                        highScore = score
+                    score = 0
         if event.type == pygame.QUIT:
             pygame.quit()
     Redraw_gamewindow()
